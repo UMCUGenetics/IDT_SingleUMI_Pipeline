@@ -2,21 +2,21 @@
 
 start1=$SECONDS
 
-FASTQ1=/hpc/cog_bioinf/cuppen/personal_data/bvanderroest/UMI9nt_DUAL_INDEX/Data/Reads/Undetermined_S0_L001_R1_001_S1.fastq.gz
-FASTQ2=/hpc/cog_bioinf/cuppen/personal_data/bvanderroest/UMI9nt_DUAL_INDEX/Data/Reads/Undetermined_S0_L001_R2_001_S1.fastq.gz
-REF_GENOME=/hpc/cog_bioinf/GENOMES/Homo_sapiens.GRCh37.GATK.illumina/Homo_sapiens.GRCh37.GATK.illumina.fasta
+FASTQ1=<FASTQ1 FILE>
+FASTQ2=<FASTQ2 FILE>
+REF_GENOME=<REFERENCE GENOME>
 
-OUTPUT_DIR=/hpc/cog_bioinf/cuppen/personal_data/bvanderroest/UMI9nt_DUAL_INDEX/workflow_out
-TMPDIR=$3
+OUTPUT_DIR=<PATH TO OUTPUT FOLDER>
+TMPDIR=<PATH TO TEMPORARY DIRECTORY>
 
-FGBIO=/hpc/cog_bioinf/cuppen/project_data/Yano_duplex_seq/fgbio/fgbio.jar
-PICARD=/hpc/cog_bioinf/cuppen/project_data/Yano_duplex_seq/picard/picard.jar
-GATK=/hpc/local/CentOS7/cog_bioinf/GenomeAnalysisTK-3.4-46/GenomeAnalysisTK.jar
-BCFTOOLS=/hpc/local/CentOS7/cog_bioinf/bcftools-1.7/bcftools
-SCRIPTS=/hpc/cog_bioinf/cuppen/personal_data/bvanderroest/UMI9nt_DUAL_INDEX/Scripts
+FGBIO=<PATH TO FGBIO>
+PICARD=<PATH TO PICARD>
+GATK=<PATH TO GATK>
+BCFTOOLS=<PATH TO BCFTOOLS>
+SCRIPTS=<PATH TO PYTHON SCRIPTS>
 
-SMPL=S1
-NUCL=9
+SMPL=<SAMPLE NAME>
+NUCL=<HOW MANY NUCLEOTIDES FROM READS YOU WANT>
 SAMPLE=${SMPL}_${NUCL}nt
 
 printf "\nExtract UMIs plus first ${NUCL} nucleotides from read and make a UMI fastq\n\n"
