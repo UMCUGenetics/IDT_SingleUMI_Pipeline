@@ -2,13 +2,13 @@
 
 nextflow.preview.dsl=2
 
-include extractAllFastqFromDir from '/hpc/cog_bioinf/cuppen/personal_data/sander/scripts/Nextflow/NextflowModules/Utils/fastq.nf' params(params)
-include MergeFastQs from '/hpc/cog_bioinf/cuppen/personal_data/sander/scripts/Nextflow/NextflowModules/bash/MergeFastQs.nf' params(params)
-include DemuxFastqs from '/hpc/cog_bioinf/cuppen/personal_data/sander/scripts/Nextflow/NextflowModules/fgbio/1.1.0/DemuxFastqs.nf' params(params)
-include MakeUmiBam from '/hpc/cog_bioinf/cuppen/personal_data/sander/scripts/Nextflow/NextflowModules/python/MakeUmiBam.nf' params(params)
-include SortBam from '/hpc/cog_bioinf/cuppen/personal_data/sander/scripts/Nextflow/NextflowModules/fgbio/1.1.0/SortBam.nf' params(params)
-include CallMolecularConsensusReads from '/hpc/cog_bioinf/cuppen/personal_data/sander/scripts/Nextflow/NextflowModules/fgbio/1.1.0/CallMolecularConsensusReads.nf' params(params)
-include FilterConsensusReads from '/hpc/cog_bioinf/cuppen/personal_data/sander/scripts/Nextflow/NextflowModules/fgbio/1.1.0/FilterConsensusReads.nf' params(params)
+include './NextflowModules/Utils/fastq.nf' params(params)
+include MergeFastQs from './NextflowModules/bash/MergeFastQs.nf' params(params)
+include DemuxFastqs from './NextflowModules/fgbio/1.1.0/DemuxFastqs.nf' params(params)
+include MakeUmiBam from './NextflowModules/python/MakeUmiBam.nf' params(params)
+include SortBam from './NextflowModules/fgbio/1.1.0/SortBam.nf' params(params)
+include CallMolecularConsensusReads from './NextflowModules/fgbio/1.1.0/CallMolecularConsensusReads.nf' params(params)
+include FilterConsensusReads from './NextflowModules/fgbio/1.1.0/FilterConsensusReads.nf' params(params)
 workflow{
   main:
     def input_fastqs
@@ -84,10 +84,10 @@ workflow{
       .map{file -> tuple(file.baseName.split('-')[0], file)}
       .groupTuple()
 
-    MakeUmiBam(to_annotate).view()
+    MakeUmiBam(to_annotate)
     SortBam(MakeUmiBam.out)
-    CallMolecularConsensusReads(SortBam.out).view()
-    FilterConsensusReads(CallMolecularConsensusReads.out).view()
+    CallMolecularConsensusReads(SortBam.out)
+    FilterConsensusReads(CallMolecularConsensusReads.out)
   // emit:
     // MergeFastQs.out
 
