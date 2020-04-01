@@ -9,6 +9,9 @@ include MakeUmiBam from './NextflowModules/python/MakeUmiBam.nf' params(params)
 include SortBam from './NextflowModules/fgbio/1.1.0/SortBam.nf' params(params)
 include CallMolecularConsensusReads from './NextflowModules/fgbio/1.1.0/CallMolecularConsensusReads.nf' params(params)
 include FilterConsensusReads from './NextflowModules/fgbio/1.1.0/FilterConsensusReads.nf' params(params)
+include CountUmiFamilies from './NextflowModules/python/CountUmiFamilies.nf' params(params)
+include SamToFastq from './NextflowModules/GATK/4.1.3.0/SamToFastq.nf' params(params)
+
 workflow{
   main:
     def input_fastqs
@@ -30,16 +33,17 @@ workflow{
     if (params.singleEnd){
       R1_channel = input_fastqs
         .map{
-          sample_id, rg_id, fastqs ->
-          flowcell = rg_id.split('_')[1]
+          sample_id, rg_id, machine ,run_nr,fastqs ->
+          def flowcell = rg_id.split('_')[1]
+          // fastqs[0].split("/")[-1].split
           [sample_id, flowcell, fastqs[0], fastqs[1], fastqs[2]]
         }
         .groupTuple()
         .multiMap{
             sample_id, flowcell, r1, i1, i2 ->
-            R1_channel: [sample_id,flowcell[0],r1.toSorted()]
-            I1_channel: [sample_id,flowcell[0],i1.toSorted()]
-            I2_channel: [sample_id,flowcell[0],i2.toSorted()]
+            R1_channel: [sample_id,flowcell[0], r1.toSorted()]
+            I1_channel: [sample_id,flowcell[0], i1.toSorted()]
+            I2_channel: [sample_id,flowcell[0], i2.toSorted()]
         }
         .set{fastq_channels}
       // MergeFastQs(R1_channel).view()
@@ -51,8 +55,8 @@ workflow{
     }else{
       input_fastqs
         .map{
-          sample_id, rg_id, fastqs ->
-          flowcell = rg_id.split('_')[1]
+          sample_id, rg_id, machine, run_nr, fastqs ->
+          def flowcell = rg_id.split('_')[1]
           [sample_id, flowcell, fastqs[0],fastqs[1], fastqs[2],fastqs[3]]
         }
         .groupTuple()
@@ -74,22 +78,33 @@ workflow{
     to_demux = MergeFastQs.out
       .groupTuple()
       .map{
-        sample_id, tags, fastqs ->
-        [ params.sample_sheet, fastqs.sort{it.name}, params.read_structures ]
+        sample_id, flowcell, tags, fastqs ->
+        [ params.sample_sheet, flowcell, fastqs.sort{it.name}, params.read_structures ]
       }
     to_annotate = DemuxFastqs(to_demux)
-      .map{metrics,fastqs -> fastqs}
-      .flatten()
-      .filter { !(it =~ /.*unmatched.*/) }
-      .map{file -> tuple(file.baseName.split('-')[0], file)}
-      .groupTuple()
+      .map{metrics,flowcell, fastqs ->
+         fastqs.findAll{ ! (it =~ /.*unmatched.*/)}
+       }
+       .flatten()
+       .map{ fastq ->
+         def name = fastq.baseName.split('_')[0]
+         def (flowcell, lane, machine, run_nr) = flowcellLaneFromFastq(fastq)
+         [name, flowcell, machine, run_nr, fastq]
+       }
+       .groupTuple()
+       .map{name, flowcells, machines, run_nrs, fastqs -> [name, flowcells[0], machines[0], run_nrs[0], fastqs]}
 
     MakeUmiBam(to_annotate)
     SortBam(MakeUmiBam.out)
-    CallMolecularConsensusReads(SortBam.out)
-    FilterConsensusReads(CallMolecularConsensusReads.out)
-  // emit:
-    // MergeFastQs.out
+
+    to_fastq = CallMolecularConsensusReads(SortBam.out)
+    if (params.filter){
+      to_fastq = FilterConsensusReads(CallMolecularConsensusReads.out)
+    }
+    SamToFastq(to_fastq)
+    CountUmiFamilies(to_fastq)
+  emit:
+    SamToFastq.out
 
 
 
