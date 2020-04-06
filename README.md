@@ -50,7 +50,7 @@ S2,100ng-5cyc-S2_HYKVFBGX9,AGAGTAGCAAGGCGTA
 
 ```
 The samplesheet is formatted as follows:
-<Sample_ID><Samplename_FlowcellID><I1barcodeI2Barcode>
+Sample_ID,Samplename_FlowcellID,I1barcodeI2Barcode
 In the case of dual barcoding the I1 & I2 barcode sequences should be appended together.
 
 ### Starting the workflow
