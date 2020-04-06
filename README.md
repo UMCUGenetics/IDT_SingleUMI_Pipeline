@@ -4,7 +4,7 @@ Pipeline for creating FastQ files with single UMI and first n nucleotides of the
 ## Installing & Setup
 1. [Install Nextflow](https://www.nextflow.io/docs/latest/getstarted.html#installation)
 2. [Install Singularity](https://sylabs.io/guides/3.5/admin-guide/)
-3. [Pull/Clone NF-IAP](#pull-or-clone)
+3. [Pull/Clone IDT_SingleUMI_Pipeline](#pull-or-clone)
 4. [Get & configure resources](docs/resources.md)
 5. [Configure nextflow](docs/nextflow.md)
 6. [Configure processes](docs/processes.md)
