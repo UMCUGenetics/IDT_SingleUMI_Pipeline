@@ -18,14 +18,15 @@ tar -xzvf Homo_sapiens_Ensembl_GRCh37.tar.gz
 Copy the files in the /Homo_sapiens/Ensembl/GRCh37/Sequence/WholeGenomeFasta/* directory to a resources directory:
 
 ```
-cp -R /Homo_sapiens/Ensembl/GRCh37/Sequence/WholeGenomeFasta/* /nf-iap/resources/GRCh37/Sequence
+cp -R /Homo_sapiens/Ensembl/GRCh37/Sequence/WholeGenomeFasta/* /IDT_SingleUMI_Pipeline/resources/GRCh37/Sequence
 ```
 
 ### 2 Create resources config
 Adapt the configs/resources.config file to include the resources you just gathered.
-
+Also don't forget to set the resource_dir. 
 ```
 params {
-  genome_fasta = '/hpc/cog_bioinf/GENOMES/Homo_sapiens.GRCh37.GATK.illumina/Homo_sapiens.GRCh37.GATK.illumina.fasta'
+  resource_dir = '/full/path/to/resources/dir/'
+  genome_fasta = "${params.resource_dir}/GRCh37/Sequence/genome.fa"
 }
 ```
