@@ -29,71 +29,53 @@ workflow{
     if (params.fastq_path){
       input_fastqs = extractAllFastqFromDir(params.fastq_path)
     }
-
+    input_fastqs.view()
     if (params.singleEnd){
-      R1_channel = input_fastqs
+      input_fastqs
         .map{
           sample_id, rg_id, machine ,run_nr,fastqs ->
           def flowcell = rg_id.split('_')[1]
-          // fastqs[0].split("/")[-1].split
-          [sample_id, flowcell, fastqs[0], fastqs[1], fastqs[2]]
+          [sample_id, flowcell, fastqs[0], fastqs[1]]
         }
         .groupTuple()
         .multiMap{
-            sample_id, flowcell, r1, i1, i2 ->
-            R1_channel: [sample_id,flowcell[0], r1.toSorted()]
-            I1_channel: [sample_id,flowcell[0], i1.toSorted()]
-            I2_channel: [sample_id,flowcell[0], i2.toSorted()]
+          sample_id, flowcell, r1, umi ->
+          R1_channel: [sample_id,flowcell[0], r1.toSorted()]
+          UMI_channel: [sample_id,flowcell[0], umi.toSorted()]
         }
         .set{fastq_channels}
-      // MergeFastQs(R1_channel).view()
       MergeFastQs(
-          fastq_channels.R1_channel
-            .mix(fastq_channels.I1_channel)
-            .mix(fastq_channels.I2_channel)
+        fastq_channels.R1_channel
+          .mix(fastq_channels.UMI_channel)
       )
     }else{
       input_fastqs
         .map{
           sample_id, rg_id, machine, run_nr, fastqs ->
           def flowcell = rg_id.split('_')[1]
-          [sample_id, flowcell, fastqs[0],fastqs[1], fastqs[2],fastqs[3]]
+          [sample_id, flowcell, fastqs[0],fastqs[1], fastqs[2]]
         }
         .groupTuple()
         .multiMap{
-          sample_id, flowcell, r1, r2, i1, i2 ->
+          sample_id, flowcell, r1, umi, r2 ->
           R1_channel: [sample_id,flowcell[0],r1.toSorted()]
           R2_channel: [sample_id,flowcell[0],r2.toSorted()]
-          I1_channel: [sample_id,flowcell[0],i1.toSorted()]
-          I2_channel: [sample_id,flowcell[0],i2.toSorted()]
+          UMI_channel: [sample_id,flowcell[0],umi.toSorted()]
         }
         .set{fastq_channels}
       MergeFastQs(
-        fastq_channels.R1_channel
-          .mix(fastq_channels.R2_channel)
-          .mix(fastq_channels.I1_channel)
-          .mix(fastq_channels.I2_channel)
+          fastq_channels.R1_channel
+            .mix(fastq_channels.R2_channel)
+            .mix(fastq_channels.UMI_channel)
       )
     }
-    to_demux = MergeFastQs.out
+    to_annotate = MergeFastQs.out
       .groupTuple()
       .map{
-        sample_id, flowcell, tags, fastqs ->
-        [ params.sample_sheet, flowcell, fastqs.sort{it.name}, params.read_structures ]
+        sample_id, flowcells, tags, fastqs ->
+        def (flowcell, lane, machine, run_nr) = flowcellLaneFromFastq(fastqs[0])
+        [sample_id, flowcells[0],machine, run_nr,fastqs]
       }
-    to_annotate = DemuxFastqs(to_demux)
-      .map{metrics,flowcell, fastqs ->
-         fastqs.findAll{ ! (it =~ /.*unmatched.*/)}
-       }
-       .flatten()
-       .map{ fastq ->
-         def name = fastq.baseName.split('_')[0]
-         def (flowcell, lane, machine, run_nr) = flowcellLaneFromFastq(fastq)
-         [name, flowcell, machine, run_nr, fastq]
-       }
-       .groupTuple()
-       .map{name, flowcells, machines, run_nrs, fastqs -> [name, flowcells[0], machines[0], run_nrs[0], fastqs]}
-
     MakeUmiBam(to_annotate)
     SortBam(MakeUmiBam.out)
 
